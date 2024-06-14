@@ -7,7 +7,6 @@ from openai import OpenAI
 import os
 
 def get_crawl_data(url):
-    print("get_crawl_data")
     load_dotenv()
 
     loader = FireCrawlLoader(
@@ -21,7 +20,6 @@ def get_crawl_data(url):
     return docs
 
 def setup_vector_store(docs):
-    print("setup_vector_store")
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000, 
         chunk_overlap=200
@@ -31,19 +29,15 @@ def setup_vector_store(docs):
     return vectorstore
 
 def answer_user_prompt(question, vectorstore):
-    print("answer_user_prompt")
     load_dotenv()
     
     docs = vectorstore.similarity_search(query=question)
     client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
     
-    print("before system_message")
     system_message = """You are a friendly assistant. Your job is to answer the user's question based on the documentation provided below."""
     
-    print("before user_message")
     user_message = f"Docs:\n\n{docs}\n\nQuestion: {question}"
 
-    print("before response")
     response = client.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -52,7 +46,6 @@ def answer_user_prompt(question, vectorstore):
         ]
     )
 
-    print(f"response: {response}")
     print(response.choices[0].message.content)
 
     return 
