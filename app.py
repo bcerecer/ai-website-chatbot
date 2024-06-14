@@ -20,6 +20,9 @@ def get_crawl_data(url):
     return docs
 
 def setup_vector_store(docs):
+    if not docs:
+        raise ValueError("No documents were loaded. Please check the URL and the FireCrawl API key.")
+
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000, 
         chunk_overlap=200
@@ -38,7 +41,7 @@ def answer_user_prompt(question, vectorstore):
     
     user_message = f"Docs:\n\n{docs}\n\nQuestion: {question}"
 
-    response = client.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": system_message},
@@ -46,10 +49,13 @@ def answer_user_prompt(question, vectorstore):
         ]
     )
 
-    print(response.choices[0].message.content)
+    if response and response.choices:
+        response_content = response.choices[0].message.content.strip()
+        print(f"Answer: {response_content}\n")
+    else:
+        raise ValueError("The OpenAI API response did not contain response data.")
 
     return 
-
 
 if __name__ == "__main__":
     url = 'https://firecrawl.dev'
@@ -63,7 +69,7 @@ if __name__ == "__main__":
         
         while True:
             # Prompt the user for a question
-            question = input("Do you have any questions about the website? ")
+            question = input("\nDo you have any questions about the website?\n")
             
             if question.lower() in ["no", "n"]:
                 print("Thank you! Have a great day!")
@@ -71,13 +77,5 @@ if __name__ == "__main__":
             
             # Answer the user's question
             answer_user_prompt(question, vectorstore)
-            
-            # Ask if the user has any other questions
-            another_question = input("Do you have any other question? ")
-            
-            if another_question.lower() in ["no", "n", "No", "NO"]:
-                print("Thank you! Have a great day!")
-                break
-        
     except Exception as e:
         print(f"An error occurred: {e}")
